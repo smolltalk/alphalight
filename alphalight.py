@@ -1,4 +1,5 @@
 import sys
+import random
 
 class ScreenSimulator:
 
@@ -8,26 +9,24 @@ class ScreenSimulator:
     self.buffer = [0] * w * h
     
   def push(self, v):
-    self.buffer = [v] + self.buffer[::-1]
+    self.buffer = [v] + self.buffer[:-1]
     
   def display(self):
     sys.stdout.write("\033[2J")
-    i = 0
+    sys.stdout.write("\033[1;31m")
+    i = self.w * self.h - 1
     for y in xrange(self.h):
       for x in xrange(self.w):
         if self.buffer[i] == 1: 
-          sys.stdout.write("X")
+          sys.stdout.write(u'\u25cf ')
         else:
-          sys.stdout.write(".")
-        i = i + 1
+          sys.stdout.write(u'  ')
+        i = i - 1
       print("")
 
+      
 s = ScreenSimulator(32, 8)
-s.push(1)
-s.push(1)
-s.push(1)
-s.push(1)
-s.push(1)
-
+for i in xrange(32*8):
+  s.push(random.randint(0, 1))
 s.display()
 
