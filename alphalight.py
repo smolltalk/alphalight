@@ -4,6 +4,7 @@ import numpy
 import PIL
 import os
 import ctypes
+import time
 
 class ScreenSimulator:
 
@@ -16,26 +17,24 @@ class ScreenSimulator:
     self.buffer = [v] + self.buffer[:-1]
     
   def display(self):
-    sys.stdout.write("\033[2J")
     sys.stdout.write("\033[1;31m")
-    #os.system('cls')
     i = self.w * self.h - 1
     for y in xrange(self.h):
       for x in xrange(self.w):
         if self.buffer[i] == 1: 
-          #sys.stdout.write(u'\u25cf ')
-          sys.stdout.write('\xfe  ')
+          sys.stdout.write(u'\u25cf ')
         else:
-          sys.stdout.write('   ')
+          sys.stdout.write('  ')
         i = i - 1
       print("")
-
-
-kernel32 = ctypes.windll.kernel32
-kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+    sys.stdout.write("\033[8A")
+    sys.stdout.write("\033[64D")
 
 s = ScreenSimulator(32, 8)
-for i in xrange(32*8):
-  s.push(random.randint(0, 1))
-s.display()
+print ""
+for j in xrange(2580): 
+  for i in xrange(32*8):
+    s.push(random.randint(0, 1))
+  s.display()
+
 
