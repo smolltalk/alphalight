@@ -6,6 +6,8 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import numpy as np
 
+from ledscreen import utils
+
 class StaticImageComponent:
   def __init__(self, image, x, y, w, h):
     self.x = x
@@ -22,9 +24,6 @@ class StaticImageComponent:
     cropy2 = min(cropy + self.h, self.th)
     cropTextImage = self.image.crop((cropx, cropy, cropx2, cropy2))
     screenImage.paste(cropTextImage, (self.x, self.y)) 
-    
-    self.scrollOffset += 1
-    self.scrollOffset %= self.tw - self.w
   
 class ScrollingImageComponent:
   
@@ -62,3 +61,16 @@ class AdaptativeImageComponent:
   def display(self, screenImage):
     self.component.display(screenImage)
   
+class AdaptativeTextComponent:
+  def __init__(self, text, x, y, w, h):
+    textImage = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
+    tw, th = textImage.size
+    if tw < w:
+      self.component = StaticImageComponent(textImage, x, y,w, h)
+    else:
+      scrollingImage = Image.new('L', (tw + w , th), 1)
+      scrollingImage.paste(textImage, (0, 0))
+      self.component = ScrollingImageComponent(scrollingImage, x, y, w, h)    
+
+  def display(self, screenImage):
+    self.component.display(screenImage)

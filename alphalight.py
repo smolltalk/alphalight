@@ -24,12 +24,7 @@ from ledscreen import components
 def test():
   w, h = (32, 8)  
 
-  textImage = utils.text_to_image('Bonjour Elena et Jules !', '/Library/Fonts/Arial Bold.ttf', 10)
-  tw, th = textImage.size
-  scrollingImage = Image.new('L', (tw + w , th), 1)
-  scrollingImage.paste(textImage, (0, 0))
-
-  scrollingText = components.ScrollingImageComponent(scrollingImage, 10, 0, 32, 8)  
+  scrollingText = components.AdaptativeTextComponent('Bonjour Elena et Jules !', 0, 0, 32, 8)  
   s = ScreenSimulator.new(32, 8)
   
   while True:
