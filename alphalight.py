@@ -40,6 +40,31 @@ class ScreenSimulator:
     sys.stdout.write("\033[8A")
     sys.stdout.write("\033[64D")
  
+class ScrollingImage:
+  
+  def __init__(self, image, x, y, w, h):
+    self.x = x
+    self.y = y
+    self.w = w
+    self.h = h
+    self.scrollOffset = 0
+    tw, th = image.size    
+    self.scrollingImage = Image.new('L', (tw + w , th), 1)
+    self.scrollingImage.paste(image, (0, 0))
+    self.scrollingImage.paste(image, (tw, 0))
+    self.tw, self.th = self.scrollingImage.size
+
+  def display(self, screenImage):
+    cropx = self.scrollOffset
+    cropy = 0
+    cropx2 = min(cropx + self.w, self.tw)
+    cropy2 = min(cropy + self.h, self.th)
+    cropTextImage = self.scrollingImage.crop((cropx, cropy, cropx2, cropy2))
+    screenImage.paste(cropTextImage, (0, 0)) 
+    
+    self.scrollOffset += 1
+    self.scrollOffset %= self.tw - self.w
+    
 def text_to_image(text, fontpath, fontsize):
     font = ImageFont.truetype(fontpath, fontsize) 
     w, h = font.getsize(text)  
@@ -53,13 +78,18 @@ def text_to_image(text, fontpath, fontsize):
     return result
 
 def test():
-  textImage = text_to_image('Hello ', '/Library/Fonts/Arial Bold.ttf', 10)
+  w, h = (32, 8)  
+
+  textImage = text_to_image('Bonjour Elena et Jules !', '/Library/Fonts/Arial Bold.ttf', 10)
   tw, th = textImage.size
-  for i in xrange(tw):
-    w, h = (32, 8)  
-    image = Image.new('L', (w, h), 1)  
-    cropTextImage = textImage.crop((i, 0, tw, th))
-    image.paste(cropTextImage, (0,0)) 
+  scrollingImage = Image.new('L', (tw + w , th), 1)
+  scrollingImage.paste(textImage, (0, 0))
+
+  scrollingText = ScrollingImage(scrollingImage, 0, 0, 32, 8)  
+  
+  while True:
+    image = Image.new('L', (w, h), 1) 
+    scrollingText.display(image) 
     arr = np.asarray(image)
     arr = np.where(arr, 0, 1)
     
@@ -70,5 +100,4 @@ def test():
     s.display()
     time.sleep(.1)
 
-for i in xrange(10):
-  test()
+test()
