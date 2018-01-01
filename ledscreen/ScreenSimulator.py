@@ -23,3 +23,6 @@ class ScreenSimulator:
       print("")
     sys.stdout.write("\033[8A")
     sys.stdout.write("\033[64D")
+
+def new(w, h):
+  return ScreenSimulator(w, h) 

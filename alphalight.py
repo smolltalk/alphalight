@@ -63,6 +63,7 @@ def test():
   scrollingImage.paste(textImage, (0, 0))
 
   scrollingText = ScrollingImage(scrollingImage, 0, 0, 32, 8)  
+  s = ScreenSimulator.new(32, 8)
   
   while True:
     image = Image.new('L', (w, h), 1) 
@@ -70,7 +71,7 @@ def test():
     arr = np.asarray(image)
     arr = np.where(arr, 0, 1)
     
-    s = ScreenSimulator.ScreenSimulator(32, 8)
+
     for a in arr:
       for b in a:
         s.push(b)
