@@ -14,55 +14,22 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import numpy as np
 from ledscreen import ScreenSimulator
+from ledscreen import utils
+from ledscreen import components
 
 # See https://stackoverflow.com/questions/36384353/generate-pixel-matrices-from-characters-in-string
- 
-class ScrollingImage:
+# TODO Autoscroll auto center text component
+# TODO Time component
   
-  def __init__(self, image, x, y, w, h):
-    self.x = x
-    self.y = y
-    self.w = w
-    self.h = h
-    self.scrollOffset = 0
-    tw, th = image.size    
-    self.scrollingImage = Image.new('L', (tw + w , th), 1)
-    self.scrollingImage.paste(image, (0, 0))
-    self.scrollingImage.paste(image, (tw, 0))
-    self.tw, self.th = self.scrollingImage.size
-
-  def display(self, screenImage):
-    cropx = self.scrollOffset
-    cropy = 0
-    cropx2 = min(cropx + self.w, self.tw)
-    cropy2 = min(cropy + self.h, self.th)
-    cropTextImage = self.scrollingImage.crop((cropx, cropy, cropx2, cropy2))
-    screenImage.paste(cropTextImage, (0, 0)) 
-    
-    self.scrollOffset += 1
-    self.scrollOffset %= self.tw - self.w
-    
-def text_to_image(text, fontpath, fontsize):
-    font = ImageFont.truetype(fontpath, fontsize) 
-    w, h = font.getsize(text)  
-    h *= 2
-    image = Image.new('L', (w, h), 1)  
-    draw = ImageDraw.Draw(image)
-    draw.text((0, 0), text, font=font) 
-    arr = np.asarray(image)
-    arr = arr[(arr != 1).any(axis=1)]
-    result = Image.fromarray(arr)
-    return result
-
 def test():
   w, h = (32, 8)  
 
-  textImage = text_to_image('Bonjour Elena et Jules !', '/Library/Fonts/Arial Bold.ttf', 10)
+  textImage = utils.text_to_image('Bonjour Elena et Jules !', '/Library/Fonts/Arial Bold.ttf', 10)
   tw, th = textImage.size
   scrollingImage = Image.new('L', (tw + w , th), 1)
   scrollingImage.paste(textImage, (0, 0))
 
-  scrollingText = ScrollingImage(scrollingImage, 0, 0, 32, 8)  
+  scrollingText = components.ScrollingImageComponent(scrollingImage, 10, 0, 32, 8)  
   s = ScreenSimulator.new(32, 8)
   
   while True:
@@ -71,7 +38,6 @@ def test():
     arr = np.asarray(image)
     arr = np.where(arr, 0, 1)
     
-
     for a in arr:
       for b in a:
         s.push(b)
