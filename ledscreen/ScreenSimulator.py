@@ -13,8 +13,8 @@ class ScreenSimulator:
   def display(self):
     sys.stdout.write("\033[1;31m")
     i = self.w * self.h - 1
-    for y in xrange(self.h):
-      for x in xrange(self.w):
+    for y in range(self.h):
+      for x in range(self.w):
         if self.buffer[i] == 1: 
           sys.stdout.write(u'\u25cf ')
         else:
