@@ -63,7 +63,8 @@ class AdaptativeImageComponent:
   
 class AdaptativeTextComponent:
   def __init__(self, text, x, y, w, h):
-    textImage = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
+    #textImage = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
+    textImage = utils.text_to_image(text, 'c:\\windows\\fonts\\arialbd.ttf', 10)
     tw, th = textImage.size
     if tw < w:
       self.component = StaticImageComponent(textImage, x, y,w, h)

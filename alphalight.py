@@ -1,31 +1,51 @@
 import time
 import PIL
 import numpy as np
+import threading as th
 from ledscreen import components
 from ledscreen import ScreenSimulator
+
 
 # See https://stackoverflow.com/questions/36384353/generate-pixel-matrices-from-characters-in-string
 # TODO Autoscroll auto center text component
 # TODO Time component
 # TODO Weather component
 # TODO Manage fonts path in config file
+# TODO Clock Alarm
+# TODO 
+# TODO Add a sequencer
+# TODO Manage RGBA colors
 
-def test():
-  w, h = (32, 8)  
+class Displayer(th.Thread):
+  def __init__(self, screen):
+    self.screen = screen
+    self.componentList = []
 
-  scrollingText = components.AdaptativeTextComponent('Hello!', 0, 0, 32, 8)  
-  s = ScreenSimulator.new(32, 8)
+  def addComponent(self, component):
+    self.componentList += component
   
-  while True:
-    image = PIL.Image.new('L', (w, h), 1) 
-    scrollingText.display(image) 
+  def run(self):
+    w, h = screen.size()
+    image = PIL.Image.new('L', (w, h), 1)
+
+    for component in self.componentList:
+      component.display(image)
+
     arr = np.asarray(image)
     arr = np.where(arr, 0, 1)
     
     for a in arr:
       for b in a:
-        s.push(b)
-    s.display()
-    time.sleep(.1)
+        self.screen.push(b)
+    self.screen.display()
+
+def test():
+  screen = ScreenSimulator.new(32, 8)
+  d = Displayer(screen)
+
+  scrollingText = components.AdaptativeTextComponent('Hello!', 0, 0, 32, 8)  
+  d.addComponent(scrollingText)
+
+  d.start()
 
 test()
