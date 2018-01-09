@@ -6,7 +6,10 @@ class ScreenSimulator:
     self.w = w
     self.h = h
     self.buffer = [0] * w * h
-    
+  
+  def size(self):
+    return (self.w, self.h)
+
   def push(self, v):
     self.buffer = [v] + self.buffer[:-1]
     
