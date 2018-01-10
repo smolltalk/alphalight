@@ -4,9 +4,10 @@ import numpy as np
 import threading as th
 
 class Displayer(th.Thread):
-  def __init__(self, screen):
+  def __init__(self, screen, stopper=th.Event()):
     self.screen = screen
     self.componentList = []
+    self.stopper = stopper
     th.Thread.__init__(self)
 
   def addComponent(self, component):
@@ -27,10 +28,12 @@ class Displayer(th.Thread):
         self.screen.push(b)
     self.screen.display()
 
+  def stop(self):
+    self.stopper.set()
+
   def run(self):
-    while True:
+    while not self.stopper.wait(.1):
       self.display()
-      time.sleep(.1)
 
 def new(screen):
     return Displayer(screen)

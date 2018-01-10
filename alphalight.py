@@ -17,16 +17,17 @@ from ledscreen import Displayer
 # TODO Manage RGBA colors
 
 
+screen = ScreenSimulator.new(32, 8)
+d = Displayer.new(screen)
 
-def test():
-  screen = ScreenSimulator.new(32, 8)
-  d = Displayer.new(screen)
+scrollingText = components.AdaptativeTextComponent('Hello everybody!', 0, 0, 32, 8)  
+d.addComponent(scrollingText)
 
-  scrollingText = components.AdaptativeTextComponent('Hello everybody!', 0, 0, 32, 8)  
-  d.addComponent(scrollingText)
+d.start()
 
-  d.daemon = True
-  d.start()
-  d.join(99999)
+end = False
+while not end:
+  v = input()
+  end = True
 
-test()
+d.stop()
