@@ -4,21 +4,21 @@ import numpy as np
 import threading as th
 
 class Displayer(th.Thread):
-  def __init__(self, screen, stopper=th.Event()):
+  def __init__(self, component_manager, screen, stopper=th.Event()):
+    self.component_manager = component_manager
     self.screen = screen
-    self.componentList = []
+    self.component_list = []
     self.stopper = stopper
     th.Thread.__init__(self)
 
-  def addComponent(self, component):
-    self.componentList.append(component)
-
   def display(self):
+    self.component_list = self.component_manager.get_list()
+
     w, h = self.screen.size()
     image = PIL.Image.new('L', (w, h), 1)
 
-    for component in self.componentList:
-      component.display(image)
+    for component in self.component_list:
+      component.display(image, None)
 
     arr = np.asarray(image)
     arr = np.where(arr, 0, 1)
@@ -35,5 +35,5 @@ class Displayer(th.Thread):
     while not self.stopper.wait(.1):
       self.display()
 
-def new(screen):
-    return Displayer(screen)
+def new(component_manager, screen):
+    return Displayer(component_manager, screen)

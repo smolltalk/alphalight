@@ -11,38 +11,39 @@ from alpha.component import *
 # TODO Weather component
 # TODO Manage fonts path in config file
 # TODO Clock Alarm
-# TODO 
+# TODO
 # TODO Add a sequencer
 # TODO Manage RGBA colors
 # TODO Type controller enter/exit/+/-
+# TODO Rename variable to snake_case
 
 # Rules
 # 1: List of Widget
 # 2: For each widget, maybe something to do in backend
-# 3: 
+# 3:
 # 4: Configuration mode is the highest graphic priority
 # 5: Notifications preempt
 
-   
 
 # Component Manager
 cm = ComponentManager()
-cm.load()
 
 # Screen
 screen = ScreenSimulator.new(32, 8)
 
+# Computer
+c = Computer(cm)
+
 # Displayer
-d = Displayer.new(screen)
+d = Displayer.new(cm, screen)
 
-for c in cm.componentList:
-  d.addComponent(c)
-
+c.start()
 d.start()
 
 end = False
 while not end:
-  v = input()
-  end = True
+    v = input()
+    end = True
 
+c.stop()
 d.stop()
