@@ -51,7 +51,7 @@ class TimeAlphaComponent(AlphaComponent):
         hour = datetime.datetime.now().strftime('%H:%M')
         if self.hour != hour:
             self.hour = hour
-            self.c = widget.AdaptativeTextComponent(hour, 0, 0, 32, 8)
+            self.c = widget.AdaptativeTextWidget(hour, 0, 0, 32, 8)
 
         self.c.display(screen_image)
 

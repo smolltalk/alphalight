@@ -5,10 +5,18 @@ from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
 import numpy as np
+import platform
 
 from ledscreen import utils
 
-class StaticImageComponent:
+class Widget(object):
+  def is_animated(self):
+    return False
+
+  def display(self, screenImage):
+    pass
+
+class StaticImageWidget(Widget):
   def __init__(self, image, x, y, w, h):
     self.x = x
     self.y = y
@@ -25,7 +33,7 @@ class StaticImageComponent:
     cropTextImage = self.image.crop((cropx, cropy, cropx2, cropy2))
     screenImage.paste(cropTextImage, (self.x, self.y)) 
   
-class ScrollingImageComponent:
+class ScrollingImageWidget(Widget):
   
   def __init__(self, image, x, y, w, h):
     self.x = x
@@ -39,6 +47,9 @@ class ScrollingImageComponent:
     self.scrollingImage.paste(image, (tw, 0))
     self.tw, self.th = self.scrollingImage.size
 
+  def is_animated(self):
+    return True
+
   def display(self, screenImage):
     cropx = self.scrollOffset
     cropy = 0
@@ -50,28 +61,36 @@ class ScrollingImageComponent:
     self.scrollOffset += 1
     self.scrollOffset %= self.tw - self.w
 
-class AdaptativeImageComponent:
+class AdaptativeImageWidget(Widget):
   def __init__(self, image, x, y, w, h):
     tw, th = image.size
     if tw < w:
-      self.component = StaticImageComponent(image, x, y, w, h)
+      self.widget = StaticImageWidget(image, x, y, w, h)
     else:
-      self.component = ScrollingImageComponent(image, x, y, w, h)    
+      self.widget = ScrollingImageWidget(image, x, y, w, h)    
+
+  def is_animated(self):
+    return self.widget.is_animated()
 
   def display(self, screenImage):
-    self.component.display(screenImage)
+    self.widget.display(screenImage)
   
-class AdaptativeTextComponent:
+class AdaptativeTextWidget(Widget):
   def __init__(self, text, x, y, w, h):
-    #textImage = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
-    textImage = utils.text_to_image(text, 'c:\\windows\\fonts\\arialbd.ttf', 10)
+    if platform.system() == 'Darwin':
+      textImage = utils.text_to_image(text, '/Library/Fonts/MEMORIA_.ttf', 8)
+    else:
+      textImage = utils.text_to_image(text, 'c:\\windows\\fonts\\arialbd.ttf', 8)
     tw, th = textImage.size
     if tw < w:
-      self.component = StaticImageComponent(textImage, x, y,w, h)
+      self.widget = StaticImageWidget(textImage, x, y,w, h)
     else:
       scrollingImage = Image.new('L', (tw + w , th), 1)
       scrollingImage.paste(textImage, (0, 0))
-      self.component = ScrollingImageComponent(scrollingImage, x, y, w, h)    
+      self.widget = ScrollingImageWidget(scrollingImage, x, y, w, h)    
 
+  def is_animated(self):
+    return self.widget.is_animated()
+  
   def display(self, screenImage):
-    self.component.display(screenImage)
+    self.widget.display(screenImage)
