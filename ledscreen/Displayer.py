@@ -3,6 +3,35 @@ import PIL
 import numpy as np
 import threading as th
 
+COMPONENT_COMPUTE_RATE = .1
+
+
+#
+#
+# Règles
+# - Le composant a une fonction draw qui renvoie une image
+# - C'est le composant supérieur qui dessine les composants enfants XYHW
+#   en appelant la fonction draw de ses enfants
+# - Le cache d'image est à la charge du composant
+# - Les coordonnées sont relatifs au parent
+
+# component.draw()
+# 	// En fonction de w et h
+# 	return
+
+# Mode non superposé #1
+#  - Pas de besoin de stocker l'image précédente
+#  - C'est le composant qui décide de se rafraichir ou pas
+#  - Seul le flag refresh peut demander au composant de se refraichir
+#  - Pas de notion de composition à différent niveau de refresh
+
+
+#  - #0 : component.compute(displayer, refresh)
+
+#           displayer.draw()
+#
+# Question : détecter qu'il n'y a rien à faire
+
 
 class ComponentSlider(object):
     def __init__(self, component_manager):
@@ -37,10 +66,9 @@ class PlayController(th.Thread):
         else:
 
     def run(self):
-        while not self.stopper.wait(.1):
+        while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
             has_changed = self.compute_state()
-            self.component.compute_ui(
-                self.input_reader, self.displayer, self.sound_player, has_changed)
+            self.component.compute(self.displayer, has_changed)
 
 
 class Displayer(object):
