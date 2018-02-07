@@ -19,12 +19,6 @@ COMPONENT_COMPUTE_RATE = .1
 # 	// En fonction de w et h
 # 	return
 
-# Mode non superposé #1
-#  - Pas de besoin de stocker l'image précédente
-#  - C'est le composant qui décide de se rafraichir ou pas
-#  - Seul le flag refresh peut demander au composant de se refraichir
-#  - Pas de notion de composition à différent niveau de refresh
-
 
 #  - #0 : component.compute(displayer, refresh)
 
@@ -75,13 +69,11 @@ class Displayer(object):
     def __init__(self, screen):
         self.screen = screen
 
-    def display(self, component):
-        self.component_list = self.component_manager.get_list()
-
+    def display(self, widget):
         w, h = self.screen.size()
         image = PIL.Image.new('L', (w, h), 1)
 
-        component.display(image, None)
+        image.paste(widget.draw(), widget.coords)
 
         arr = np.asarray(image)
         arr = np.where(arr, 0, 1)
