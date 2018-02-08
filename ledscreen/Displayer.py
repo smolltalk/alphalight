@@ -32,38 +32,21 @@ class ComponentSlider(object):
         self.component_manager = component_manager
         self.component_list = []
         self.index = -1
+        self.size = 1
 
     def get_list(self):
         self.component_list = self.component_manager.get_list()
+        self.size = len(self.component_list)
 
     def next(self, direction='r'):
         if direction == 'r':
             self.index += 1
         else:
             self.index -= 1
-        self.index %= size(self.component_list)
+        self.index %= self.size
+        if self.index == 0:
+            self.get_list()
         return self.component_list[self.index]
-
-
-class PlayController(th.Thread):
-    def __init__(self, component_slider, stopper=th.Event()):
-        self.component_slider = component_slider
-        self.stopper = stopper
-        self.component = None
-
-    def stop(self):
-        self.stopper.set()
-
-    def compute_state(self):
-        if self.component is None:
-            self.component = self.component_slider.next()
-        else:
-
-    def run(self):
-        while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
-            has_changed = self.compute_state()
-            self.component.compute(self.displayer, has_changed)
-
 
 class Displayer(object):
     def __init__(self, screen):
@@ -82,3 +65,32 @@ class Displayer(object):
             for b in a:
                 self.screen.push(b)
         self.screen.display()
+
+
+class PlayController(th.Thread):
+    def __init__(self, component_slider, displayer, stopper=th.Event()):
+        super().__init__()
+        self.daemon = True
+        self.component_slider = component_slider
+        self.displayer = displayer
+        self.stopper = stopper
+        self.component = None
+
+    def stop(self):
+        self.stopper.set()
+
+    def compute_state(self):
+        if self.component is None:
+            self.component = self.component_slider.next()
+            return True
+        else:
+            # TODO Check component.has_terminated
+            # TODO Check component has changed
+            return False
+
+
+    def run(self):
+        while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
+            has_changed = self.compute_state()
+            self.component.compute_ui(self.displayer, has_changed)
+

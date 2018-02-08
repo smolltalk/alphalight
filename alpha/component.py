@@ -19,50 +19,50 @@ class PeriodicTrigger():
         return self.counter % self.period == 0
 
 
-class AlphaComponent():
+class AlphaComponent(object):
 
     def __init__(self):
         self.compute_trigger = PeriodicTrigger(600)
-        self.display_trigger = PeriodicTrigger(1)
+        self.compute_ui_trigger = PeriodicTrigger(1)
 
     def compute(self):
         if self.compute_trigger.tick():
             self.do_compute()
 
-    def display(self, screen, data):
-        if self.display_trigger.tick():
-            self.do_display(screen, data)
+    def compute_ui(self, displayer, ask_refresh):
+        if self.compute_ui_trigger.tick():
+            self.do_compute_ui(displayer, ask_refresh)
 
     def do_compute(self):
         pass
 
-    def do_display(self, screen, data):
+    def do_compute_ui(self, displayer, ask_refresh):
         pass
 
 
 class TimeAlphaComponent(AlphaComponent):
 
     def __init__(self):
+        super().__init__()
         self.displayable = True
         self.hour = None
-        super().__init__()
+        
 
-    def do_display(self, screen_image, data):
+    def do_compute_ui(self, displayer, ask_refresh):
         hour = datetime.datetime.now().strftime('%H:%M')
         if self.hour != hour:
             self.hour = hour
-            self.c = widget.AdaptativeTextWidget(hour, 0, 0, 32, 8)
+            self.c = widget.AdaptativeText(hour, 0, 0, 32, 8)
 
-        self.c.display(screen_image)
+        displayer.display(self.c)
 
 
 class ComponentManager(AlphaComponent):
 
     component_list = []
-    cpt = 0
 
     def get_list(self):
-        return [self] + self.component_list
+        return self.component_list + [self]
 
     def load(self):
         with open('./conf/components.conf') as f:
@@ -72,9 +72,7 @@ class ComponentManager(AlphaComponent):
             self.component_list.append(c)
 
     def do_compute(self):
-        if self.cpt % 600 == 0:
-            self.load()
-        self.cpt += 1
+        self.load()
 
 
 class Computer(th.Thread):

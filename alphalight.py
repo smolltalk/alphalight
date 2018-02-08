@@ -35,10 +35,16 @@ screen = ScreenSimulator.new(32, 8)
 c = Computer(cm)
 
 # Displayer
-d = Displayer.new(cm, screen)
+d = Displayer.Displayer(screen)
+
+# Component Slider
+s = Displayer.ComponentSlider(cm)
+
+# Play Controller
+pc = Displayer.PlayController(s, d)
 
 c.start()
-d.start()
+pc.start()
 
 end = False
 while not end:
@@ -46,4 +52,4 @@ while not end:
     end = True
 
 c.stop()
-d.stop()
+pc.stop()
