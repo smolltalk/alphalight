@@ -48,6 +48,7 @@ class ComponentSlider(object):
             self.get_list()
         return self.component_list[self.index]
 
+
 class Displayer(object):
     def __init__(self, screen):
         self.screen = screen
@@ -84,13 +85,14 @@ class PlayController(th.Thread):
             self.component = self.component_slider.next()
             return True
         else:
-            # TODO Check component.has_terminated
-            # TODO Check component has changed
-            return False
-
+            if self.component.is_enough_displayed():
+                previous_component = self.component
+                self.component = self.component_slider.next()
+                return self.component != previous_component
+            else:
+                return False
 
     def run(self):
         while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
             has_changed = self.compute_state()
             self.component.compute_ui(self.displayer, has_changed)
-
