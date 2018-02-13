@@ -1,1 +1,1 @@
-__all__ = ['widget', 'Displayer', 'ScreenSimulator']
+__all__ = ['widget', 'Displayer', 'ScreenSimulator', 'getch']

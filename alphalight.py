@@ -40,16 +40,16 @@ d = Displayer.Displayer(screen)
 # Component Slider
 s = Displayer.ComponentSlider(cm)
 
+# Key Reader
+k = getch.KeyReader()
+
 # Play Controller
-pc = Displayer.PlayController(s, d)
+pc = Displayer.PlayController(s, d, k)
 
+k.start()
 c.start()
-pc.start()
 
-end = False
-while not end:
-    v = input()
-    end = True
+pc.run()
 
 c.stop()
-pc.stop()
+k.stop()

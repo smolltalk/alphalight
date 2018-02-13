@@ -88,9 +88,9 @@ class AdaptativeImage(Widget):
 class AdaptativeText(Widget):
     def __init__(self, text, x, y, w, h):
         super().__init__(x, y, w, h)
-        text_image = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
-        #text_image = utils.text_to_image(
-        #    text, 'c:\\windows\\fonts\\arialbd.ttf', 10)
+        # text_image = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
+        text_image = utils.text_to_image(
+            text, 'c:\\windows\\fonts\\arialbd.ttf', 10)
         tw, th = text_image.size
         if tw < w:
             self.image = StaticImage(text_image, x, y, w, h)

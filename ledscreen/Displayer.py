@@ -2,6 +2,7 @@ import time
 import PIL
 import numpy as np
 import threading as th
+from ledscreen import getch
 
 COMPONENT_COMPUTE_RATE = .1
 
@@ -69,18 +70,19 @@ class Displayer(object):
 
 
 class PlayController(th.Thread):
-    def __init__(self, component_slider, displayer, stopper=th.Event()):
+    def __init__(self, component_slider, displayer, key_reader, stopper=th.Event()):
         super().__init__()
         self.daemon = True
         self.component_slider = component_slider
         self.displayer = displayer
+        self.key_reader = key_reader
         self.stopper = stopper
         self.component = None
 
     def stop(self):
         self.stopper.set()
 
-    def compute_state(self):
+    def compute_state(self, key):
         if self.component is None:
             self.component = self.component_slider.next()
             return True
@@ -89,10 +91,21 @@ class PlayController(th.Thread):
                 previous_component = self.component
                 self.component = self.component_slider.next()
                 return self.component != previous_component
+            elif key == getch.Key.PLUS:
+                previous_component = self.component
+                self.component = self.component_slider.next()
+                return self.component != previous_component
+            elif key == getch.Key.MINUS:
+                previous_component = self.component
+                self.component = self.component_slider.next('l')
+                return self.component != previous_component
             else:
                 return False
 
     def run(self):
         while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
-            has_changed = self.compute_state()
+            key = self.key_reader.read_key()
+            if key == getch.Key.QUIT:
+                break
+            has_changed = self.compute_state(key)
             self.component.compute_ui(self.displayer, has_changed)
