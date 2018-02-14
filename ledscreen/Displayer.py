@@ -2,7 +2,8 @@ import time
 import PIL
 import numpy as np
 import threading as th
-from ledscreen import getch
+from ledscreen import getch as g
+import queue as q
 
 COMPONENT_COMPUTE_RATE = .1
 
@@ -69,43 +70,72 @@ class Displayer(object):
         self.screen.display()
 
 
+class InputManager(object):
+
+    def __init__(self, key_reader, root):
+        self.queue = q.LifoQueue()
+        self.current = root
+        self.key_reader = key_reader
+
+    def process(self):
+        key = self.key_reader.read_key()
+        if key == g.Key.IN:
+            e = self.current.input(key)
+            if e is not None:
+                self.queue.put(self.current)
+                self.current = e
+        elif key == g.Key.OUT:
+            if not self.queue.empty():
+                self.current.input(key)
+                self.current = self.queue.get()
+        elif key == g.Key.PLUS:
+            self.current.input(key)
+        elif key == g.Key.MINUS:
+            self.current.input(key)
+        elif key == g.Key.QUIT:
+            if self.queue.empty():
+                self.current.input(key)
+
+
 class PlayController(th.Thread):
     def __init__(self, component_slider, displayer, key_reader, stopper=th.Event()):
         super().__init__()
         self.daemon = True
         self.component_slider = component_slider
         self.displayer = displayer
-        self.key_reader = key_reader
         self.stopper = stopper
         self.component = None
+        self.input_manager = InputManager(key_reader, self)
+        self.component_changed = False
 
     def stop(self):
         self.stopper.set()
 
-    def compute_state(self, key):
+    def input(self, key):
+        if self.component:
+            if key in [g.Key.PLUS, g.Key.MINUS]:
+                previous_component = self.component
+                self.component = self.component_slider.next(
+                    'r' if key == g.Key.PLUS else '')
+                self.component_changed |= self.component != previous_component
+            elif key == g.Key.QUIT:
+                self.stop()
+            elif key == g.Key.IN:
+                return self.component
+
+    def compute_state(self):
         if self.component is None:
             self.component = self.component_slider.next()
-            return True
+            self.component_changed = True
         else:
             if self.component.is_enough_displayed():
                 previous_component = self.component
                 self.component = self.component_slider.next()
-                return self.component != previous_component
-            elif key == getch.Key.PLUS:
-                previous_component = self.component
-                self.component = self.component_slider.next()
-                return self.component != previous_component
-            elif key == getch.Key.MINUS:
-                previous_component = self.component
-                self.component = self.component_slider.next('l')
-                return self.component != previous_component
-            else:
-                return False
+                self.component_changed |= self.component != previous_component
 
     def run(self):
         while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
-            key = self.key_reader.read_key()
-            if key == getch.Key.QUIT:
-                break
-            has_changed = self.compute_state(key)
-            self.component.compute_ui(self.displayer, has_changed)
+            self.component_changed = False
+            self.compute_state()
+            self.input_manager.process()
+            self.component.compute_ui(self.displayer, self.component_changed)

@@ -66,6 +66,9 @@ class AlphaComponent(object):
     def do_compute_ui(self, displayer, ask_refresh):
         pass
 
+    def input(self, key):
+        pass
+
 
 class TimeAlphaComponent(AlphaComponent):
 
