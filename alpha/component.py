@@ -1,4 +1,5 @@
 from ledscreen import *
+from ledscreen import getch as g
 from enum import Enum, auto
 from datetime import datetime
 import threading as th
@@ -60,6 +61,9 @@ class AlphaComponent(object):
     def is_enough_displayed(self):
         return self.display_duration.is_triggered()
 
+    def is_editable(self):
+        return False
+
     def do_compute(self):
         pass
 
@@ -70,7 +74,7 @@ class AlphaComponent(object):
         pass
 
 
-class TimeAlphaComponent(AlphaComponent):
+class TimeComponent(AlphaComponent):
 
     def __init__(self):
         super().__init__()
@@ -84,6 +88,29 @@ class TimeAlphaComponent(AlphaComponent):
             self.c = widget.AdaptativeText(hour, 0, 0, 32, 8)
 
         displayer.display(self.c)
+
+
+class CountComponent(AlphaComponent):
+
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+        self.displayed_count = -1
+
+    def do_compute_ui(self, displayer, ask_refresh):
+        if self.count != self.displayed_count or ask_refresh:
+            c = widget.AdaptativeText(str(self.count), 0, 0, 32, 8)
+            self.displayed_count = self.count
+            displayer.display(c)
+
+    def is_editable(self):
+        return True
+
+    def input(self, key):
+        if key == g.Key.PLUS:
+            self.count += 1
+        else:
+            self.count -= 1
 
 
 class ComponentManager(AlphaComponent):

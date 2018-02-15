@@ -121,9 +121,14 @@ class PlayController(th.Thread):
             elif key == g.Key.QUIT:
                 self.stop()
             elif key == g.Key.IN:
-                return self.component
+                if self.component.is_editable():
+                    return self.component
+                else:
+                    return None
 
     def compute_state(self):
+        if self.input_manager.current != self:
+            return
         if self.component is None:
             self.component = self.component_slider.next()
             self.component_changed = True
