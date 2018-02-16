@@ -91,6 +91,7 @@ class TimeComponent(AlphaComponent):
 
 
 class AlarmComponent(AlphaComponent):
+    # TODO blink
 
     def __init__(self):
         super().__init__()
@@ -101,7 +102,7 @@ class AlarmComponent(AlphaComponent):
 
     def do_compute_ui(self, displayer, ask_refresh):
         if ask_refresh or self.data_changed:
-            c = widget.AdaptativeText('{}:{:02d}'.format(
+            c = widget.AdaptativeText('{:2}:{:02d}'.format(
                 self.hours, self.minutes), 0, 0, 32, 8)
             self.data_changed = False
             displayer.display(c)

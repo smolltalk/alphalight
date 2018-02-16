@@ -88,9 +88,25 @@ class AdaptativeImage(Widget):
 class AdaptativeText(Widget):
     def __init__(self, text, x, y, w, h):
         super().__init__(x, y, w, h)
+        # http://www.fontsc.com/font/category/pixel-bitmap/8px?page=2
         # text_image = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
+        # arialbd.ttf', 10)
+        # Good for text shift: PressStart2P-Regular.ttf', 8)
+        # Memoria.ttf', 7)
+        # MiniTot.ttf', 8)
+        # type_writer.ttf', 8)
+        # teacp__.ttf', 7)
+        # Good for number : Fleftex_M.ttf', 8) Emulator.ttf', 8)
+        # pixearg.ttf', 8) pixeab_.ttf', 8)
+        # fixed_bo.ttf', 6)
+        # fixed_v0.ttf', 4) 02
+        # fixed_v0_0.ttf', 8) 01
+        # serif_v0.ttf', 6)
+        # swf!t__.ttf', 8)
+
         text_image = utils.text_to_image(
-            text, 'c:\\windows\\fonts\\arialbd.ttf', 10)
+            text, 'c:\\windows\\fonts\\swfit_sl.ttf', 7)
+
         tw, th = text_image.size
         if tw < w:
             self.image = StaticImage(text_image, x, y, w, h)
