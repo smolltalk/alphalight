@@ -90,17 +90,20 @@ class TimeComponent(AlphaComponent):
         displayer.display(self.c)
 
 
-class CountComponent(AlphaComponent):
+class AlarmComponent(AlphaComponent):
 
     def __init__(self):
         super().__init__()
-        self.count = 0
-        self.displayed_count = -1
+        self.hours = 0
+        self.minutes = 0
+        self.data_changed = False
+        self.edit_hours = True
 
     def do_compute_ui(self, displayer, ask_refresh):
-        if self.count != self.displayed_count or ask_refresh:
-            c = widget.AdaptativeText(str(self.count), 0, 0, 32, 8)
-            self.displayed_count = self.count
+        if ask_refresh or self.data_changed:
+            c = widget.AdaptativeText('{}:{:02d}'.format(
+                self.hours, self.minutes), 0, 0, 32, 8)
+            self.data_changed = False
             displayer.display(c)
 
     def is_editable(self):
@@ -108,9 +111,20 @@ class CountComponent(AlphaComponent):
 
     def input(self, key):
         if key == g.Key.PLUS:
-            self.count += 1
-        else:
-            self.count -= 1
+            if self.edit_hours:
+                self.hours = (self.hours + 1) % 24
+            else:
+                self.minutes = (self.minutes + 1) % 60
+            self.data_changed = True
+        elif key == g.Key.MINUS:
+            if self.edit_hours:
+                self.hours = (self.hours - 1) % 24
+            else:
+                self.minutes = (self.minutes - 1) % 60
+            self.data_changed = True
+        elif key == g.Key.IN:
+            self.edit_hours = not self.edit_hours
+            self.data_changed = True
 
 
 class ComponentManager(AlphaComponent):
