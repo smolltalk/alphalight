@@ -85,7 +85,8 @@ class TimeComponent(AlphaComponent):
         hour = datetime.now().strftime('%H:%M')
         if self.hour != hour:
             self.hour = hour
-            self.c = widget.AdaptativeText(hour, 0, 0, 32, 8)
+            self.c = widget.AdaptativeText(
+                hour, 0, 0, 32, 8, font_name='Fleftex_M')
 
         displayer.display(self.c)
 
@@ -103,7 +104,7 @@ class AlarmComponent(AlphaComponent):
     def do_compute_ui(self, displayer, ask_refresh):
         if ask_refresh or self.data_changed:
             c = widget.AdaptativeText('{:2}:{:02d}'.format(
-                self.hours, self.minutes), 0, 0, 32, 8)
+                self.hours, self.minutes), 0, 0, 32, 8, font_name='Fleftex_M')
             self.data_changed = False
             displayer.display(c)
 

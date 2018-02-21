@@ -5,7 +5,7 @@ from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
 import numpy as np
-import platform
+from sys import platform
 
 from ledscreen import utils
 
@@ -85,8 +85,12 @@ class AdaptativeImage(Widget):
         return self.image.draw()
 
 
+PLATFORM_FONT_DIR = {'win32': 'c:\\windows\\fonts\\',
+                     'darwin': '/Library/Fonts/', 'linux': '', 'linux2': ''}
+
+
 class AdaptativeText(Widget):
-    def __init__(self, text, x, y, w, h):
+    def __init__(self, text, x, y, w, h, font_name='PressStart2P-Regular', font_size=8, font_dir=None):
         super().__init__(x, y, w, h)
         # http://www.fontsc.com/font/category/pixel-bitmap/8px?page=2
         # text_image = utils.text_to_image(text, '/Library/Fonts/Arial Bold.ttf', 10)
@@ -104,8 +108,11 @@ class AdaptativeText(Widget):
         # serif_v0.ttf', 6)
         # swf!t__.ttf', 8)
 
+        if not font_dir:
+            font_dir = PLATFORM_FONT_DIR[platform]
+            
         text_image = utils.text_to_image(
-            text, 'c:\\windows\\fonts\\swfit_sl.ttf', 7)
+            text, font_dir + font_name + '.ttf', font_size)
 
         tw, th = text_image.size
         if tw < w:
