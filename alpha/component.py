@@ -2,6 +2,7 @@ from ledscreen import *
 from ledscreen import getch as g
 from enum import Enum, auto
 from datetime import datetime
+from copy import copy
 import threading as th
 
 
@@ -71,16 +72,14 @@ class AlphaComponent(object):
         self.compute_ui_trigger = PeriodicTrigger(compute_ui_period)
         self.display_duration = DurationTrigger(display_duration_sec)
         self._data = None
-
-    @property
-    def data(self):
-        return self._data
+        self._data_changed = False
+        self._is_editing = False
 
     def compute_data(self):
         if self.compute_trigger.tick():
-            data = self.do_compute_data()
-            if data:
-                self._data = data.copy()
+            prev_data = self._data
+            self._data = self.do_compute_data(copy(self._data))
+            self._data_changed = prev_data != self._data
 
     def compute_ui(self, displayer, ask_refresh):
         if ask_refresh:
@@ -88,7 +87,8 @@ class AlphaComponent(object):
             self.display_duration.reset()
 
         if self.compute_ui_trigger.tick():
-            self.do_compute_ui(displayer, ask_refresh)
+            self.do_compute_ui(displayer, ask_refresh, self._data, self._data_changed, self.compute_ui_trigger.counter)
+            self._data_changed = False
 
     def is_enough_displayed(self):
         return self.display_duration.is_triggered()
@@ -96,12 +96,21 @@ class AlphaComponent(object):
     def is_editable(self):
         return False
 
-    def do_compute(self):
+    def is_editing(self):
+        return self._is_editing
+
+    def do_compute_data(self, data):
         pass
 
-    def do_compute_ui(self, displayer, ask_refresh):
+    def do_compute_ui(self, displayer, ask_refresh, data, data_changed):
         pass
 
+    def input_in(self):
+        self._is_editing = True
+    
+    def input_out(self):
+        self._is_editing = False
+        
     def input(self, key):
         pass
 
@@ -110,21 +119,22 @@ class TimeComponent(AlphaComponent):
 
     def __init__(self):
         super().__init__()
-        self.displayable = True
         self.hour = None
 
-    def do_compute_ui(self, displayer, ask_refresh):
+    def do_compute_ui(self, displayer, ask_refresh, data, data_changed, counter):
         hour = datetime.now().strftime('%H:%M')
-        if self.hour != hour:
+        if self.hour != hour or ask_refresh:
             self.hour = hour
-            self.c = widget.AdaptativeText(
+            c = widget.AdaptativeText(
                 hour, 0, 0, 32, 8, font_name='Fleftex_M')
-
-        displayer.display(self.c)
+            displayer.display(c)
 
 
 class AlarmComponent(AlphaComponent):
-    # TODO blink
+    # TODO blink management in component?
+    # TODO is_editable as bool
+    # TODO manage data based on this component behavior
+    # TODO data store
 
     def __init__(self):
         super().__init__()
@@ -132,10 +142,18 @@ class AlarmComponent(AlphaComponent):
         self.minutes = 0
         self.data_changed = False
         self.edit_hours = True
+        self.blink = False
 
-    def do_compute_ui(self, displayer, ask_refresh):
-        if ask_refresh or self.data_changed:
-            c = widget.AdaptativeText('{:2}:{:02d}'.format(
+    def do_compute_ui(self, displayer, ask_refresh, data, data_changed, counter):
+        blink = self.is_editing() and counter % 10 < 5
+        blink_changed = blink != self.blink
+        self.blink = blink
+
+        if ask_refresh or self.data_changed or blink_changed:
+            if blink:
+                c = widget.AdaptativeText('  :  ', 0, 0, 32, 8, font_name='Fleftex_M')
+            else:    
+                c = widget.AdaptativeText('{:2}:{:02d}'.format(
                 self.hours, self.minutes), 0, 0, 32, 8, font_name='Fleftex_M')
             self.data_changed = False
             displayer.display(c)
@@ -163,6 +181,8 @@ class AlarmComponent(AlphaComponent):
 
 class ComponentManager(AlphaComponent):
 
+    # TODO Load file data in str and use it to detect change
+
     component_list = []
 
     def get_list(self):
@@ -176,10 +196,10 @@ class ComponentManager(AlphaComponent):
             c = eval(line)
             self.component_list.append(c)
 
-    def do_compute(self):
+    def do_compute_data(self, data):
         self.load()
 
-    def do_compute_ui(self, displayer, ask_refresh):
+    def do_compute_ui(self, displayer, ask_refresh, data, data_changed, counter):
         if ask_refresh:
             self.c = widget.AdaptativeText(
                 'Cloud connection is OK', 0, 0, 32, 8)
@@ -208,7 +228,7 @@ class Computer(th.Thread):
             self.component_iter = iter(self.component_manager.get_list())
 
         if c:
-            c.compute()
+            c.compute_data()
 
     def run(self):
         while not self.stopper.wait(.01):

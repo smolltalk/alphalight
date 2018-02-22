@@ -22,16 +22,7 @@ class _GetchUnix:
 
     def __call__(self):
         import sys
-        import tty
-        import termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+        return sys.stdin.read(1)
 
 
 class _GetchWindows:
@@ -71,13 +62,13 @@ class KeyReader(th.Thread):
         inkey = _Getch()
         while not self.stopper.isSet():
             k = inkey()
-            if k == b'-':
+            if k == b'-' or k == '-':
                 self.key = Key.MINUS
-            elif k == b'+':
+            elif k == b'+' or k == '+':
                 self.key = Key.PLUS
-            elif k == b'i':
+            elif k == b'i' or k == 'i':
                 self.key = Key.IN
-            elif k == b'o':
+            elif k == b'o' or k == 'o':
                 self.key = Key.OUT
-            elif k == b'q':
+            elif k == b'q' or k == 'q':
                 self.key = Key.QUIT

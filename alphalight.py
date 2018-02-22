@@ -16,6 +16,7 @@ from alpha.component import *
 # TODO Manage RGBA colors
 # TODO Type controller enter/exit/+/-
 # TODO Rename variable to snake_case
+# TODO Move TTF in an application folder
 
 # Rules
 # 1: List of Widget

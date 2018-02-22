@@ -84,9 +84,10 @@ class InputManager(object):
             if e is not None:
                 self.queue.put(self.current)
                 self.current = e
+                self.current.input_in()
         elif key == g.Key.OUT:
             if not self.queue.empty():
-                self.current.input(key)
+                self.current.input_out()
                 self.current = self.queue.get()
         elif key == g.Key.PLUS:
             self.current.input(key)
@@ -111,6 +112,12 @@ class PlayController(th.Thread):
     def stop(self):
         self.stopper.set()
 
+    def input_in():
+        pass
+    
+    def input_out():
+        pass
+        
     def input(self, key):
         if self.component:
             if key in [g.Key.PLUS, g.Key.MINUS]:
