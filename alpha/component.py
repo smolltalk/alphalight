@@ -39,16 +39,48 @@ class DurationTrigger():
         return diff.total_seconds() > self.duration_sec
 
 
+class AttributeDict(dict):
+
+    _has_changed = False
+
+    def __getitem__(self, key):
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, item):
+        _has_changed = True
+        super().__setitem__(key, item)
+
+    def __getattr__(self, key):
+        return self.__getitem__(key)
+
+    def __setattr__(self, key, item):
+        self.__setitem__(key, item)
+
+    @property
+    def has_changed(self):
+        return self._has_changed
+
+    def reset_changed(self):
+        _has_changed = False
+
+
 class AlphaComponent(object):
 
     def __init__(self, compute_period=600, compute_ui_period=1, display_duration_sec=5):
         self.compute_trigger = PeriodicTrigger(compute_period)
         self.compute_ui_trigger = PeriodicTrigger(compute_ui_period)
         self.display_duration = DurationTrigger(display_duration_sec)
+        self._data = None
 
-    def compute(self):
+    @property
+    def data(self):
+        return self._data
+
+    def compute_data(self):
         if self.compute_trigger.tick():
-            self.do_compute()
+            data = self.do_compute_data()
+            if data:
+                self._data = data.copy()
 
     def compute_ui(self, displayer, ask_refresh):
         if ask_refresh:
