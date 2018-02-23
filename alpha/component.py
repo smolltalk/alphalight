@@ -40,6 +40,18 @@ class DurationTrigger():
         return diff.total_seconds() > self.duration_sec
 
 
+class Blinker(object):
+    def __init__(self):
+        self.counter = 0
+        self.blink = False
+        self.has_changed = False
+
+    def tick(self):
+        prev_blink = self.blink
+        self.blink = self.counter % 10 < 5
+        blink_changed = prev_blink != self.blink
+
+
 class AttributeDict(dict):
 
     _has_changed = False
@@ -87,7 +99,8 @@ class AlphaComponent(object):
             self.display_duration.reset()
 
         if self.compute_ui_trigger.tick():
-            self.do_compute_ui(displayer, ask_refresh, self._data, self._data_changed, self.compute_ui_trigger.counter)
+            self.do_compute_ui(displayer, ask_refresh, self._data,
+                               self._data_changed, self.compute_ui_trigger.counter)
             self._data_changed = False
 
     def is_enough_displayed(self):
@@ -107,10 +120,10 @@ class AlphaComponent(object):
 
     def input_in(self):
         self._is_editing = True
-    
+
     def input_out(self):
         self._is_editing = False
-        
+
     def input(self, key):
         pass
 
@@ -142,19 +155,18 @@ class AlarmComponent(AlphaComponent):
         self.minutes = 0
         self.data_changed = False
         self.edit_hours = True
-        self.blink = False
+        self.blinker = Blinker()
 
     def do_compute_ui(self, displayer, ask_refresh, data, data_changed, counter):
-        blink = self.is_editing() and counter % 10 < 5
-        blink_changed = blink != self.blink
-        self.blink = blink
+        self.blinker.tick()
 
-        if ask_refresh or self.data_changed or blink_changed:
-            if blink:
-                c = widget.AdaptativeText('  :  ', 0, 0, 32, 8, font_name='Fleftex_M')
-            else:    
+        if ask_refresh or self.data_changed or (self.is_editing and self.blinker.has_changed):
+            if self.blinker.blink:
+                c = widget.AdaptativeText(
+                    '  :  ', 0, 0, 32, 8, font_name='Fleftex_M')
+            else:
                 c = widget.AdaptativeText('{:2}:{:02d}'.format(
-                self.hours, self.minutes), 0, 0, 32, 8, font_name='Fleftex_M')
+                    self.hours, self.minutes), 0, 0, 32, 8, font_name='Fleftex_M')
             self.data_changed = False
             displayer.display(c)
 

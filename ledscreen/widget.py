@@ -11,6 +11,8 @@ from ledscreen import utils
 
 
 class Widget(object):
+    # TODO: blink
+
     x = 0
     y = 0
     w = 0
@@ -109,10 +111,14 @@ class AdaptativeText(Widget):
         # swf!t__.ttf', 8)
 
         if not font_dir:
-            font_dir = PLATFORM_FONT_DIR[platform]
-            
+            self.font_dir = PLATFORM_FONT_DIR[platform]
+        self.font_name = font_name
+        self.font_size = font_size
+        self.text = text
+
+    def compute_image(self):
         text_image = utils.text_to_image(
-            text, font_dir + font_name + '.ttf', font_size)
+            _text, self.font_dir + self.font_name + '.ttf', self.font_size)
 
         tw, th = text_image.size
         if tw < w:
@@ -122,8 +128,49 @@ class AdaptativeText(Widget):
             scrolling_image.paste(text_image, (0, 0))
             self.image = ScrollingImage(scrolling_image, x, y, w, h)
 
+    @property
+    def text(self):
+        return _text
+
+    @text.setter
+    def text(self, val)
+        _text = val
+        self.compute_image()
+
     def draw(self):
         return self.image.draw()
 
     def is_animation_end(self):
         return self.image.is_animation_end()
+
+
+class AdaptativeNumeric(Widget):
+    __init__(self, value=value_min, value_min, value_max, x, y, w, h, font_name='Fleftex_M', font_size=8, font_dir=None):
+        super().__init__(x, y, w, h)
+        self.value_min = value_min
+        self.value_max = value_max
+        self.text_component = AdaptativeText(
+            '', x, y, w, h, font_name, font_size, font_dir)
+        self.value = value
+
+    @property
+    def value(self):
+        return _text
+
+    @text.setter
+    def value(self, val)
+        if val < value_min:
+            raise Exception(
+                'Value ({}) is less than min ({})'.format(val, value_min))
+        if val > value_max:
+            raise Exception(
+                'Value ({}) is greater than min ({})'.format(val, value_min))
+
+        _value = val
+        self.text_component.text = str(_value)
+
+    def draw(self):
+        return self.text_component.draw()
+
+    def is_animation_end(self):
+        return self.text_component.is_animation_end()
