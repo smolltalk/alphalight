@@ -92,6 +92,8 @@ PLATFORM_FONT_DIR = {'win32': 'c:\\windows\\fonts\\',
 
 
 class AdaptativeText(Widget):
+    # TODO text format
+
     def __init__(self, text, x, y, w, h, font_name='PressStart2P-Regular', font_size=8, font_dir=None):
         super().__init__(x, y, w, h)
         # http://www.fontsc.com/font/category/pixel-bitmap/8px?page=2
@@ -145,6 +147,7 @@ class AdaptativeText(Widget):
 
 
 class AdaptativeNumeric(Widget):
+    # TODO value format
     __init__(self, value=value_min, value_min, value_max, x, y, w, h, font_name='Fleftex_M', font_size=8, font_dir=None):
         super().__init__(x, y, w, h)
         self.value_min = value_min
