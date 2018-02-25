@@ -1,5 +1,6 @@
 import numpy
 import PIL
+import string
 
 from PIL import Image
 from PIL import ImageFont
@@ -93,6 +94,7 @@ PLATFORM_FONT_DIR = {'win32': 'c:\\windows\\fonts\\',
 
 class AdaptativeText(Widget):
     # TODO text format
+    # TODO disable auto scrolling
 
     def __init__(self, text, x, y, w, h, font_name='PressStart2P-Regular', font_size=8, font_dir=None):
         super().__init__(x, y, w, h)
@@ -120,23 +122,23 @@ class AdaptativeText(Widget):
 
     def compute_image(self):
         text_image = utils.text_to_image(
-            _text, self.font_dir + self.font_name + '.ttf', self.font_size)
+            self._text, self.font_dir + self.font_name + '.ttf', self.font_size)
 
         tw, th = text_image.size
-        if tw < w:
-            self.image = StaticImage(text_image, x, y, w, h)
+        if tw < self.w:
+            self.image = StaticImage(text_image, self.x, self.y, self.w, self.h)
         else:
-            scrolling_image = Image.new('L', (tw + w, th), 1)
+            scrolling_image = Image.new('L', (tw + self.w, th), 1)
             scrolling_image.paste(text_image, (0, 0))
-            self.image = ScrollingImage(scrolling_image, x, y, w, h)
+            self.image = ScrollingImage(scrolling_image, self.x, self.y, self.w, self.h)
 
     @property
     def text(self):
-        return _text
+        return self._text
 
     @text.setter
-    def text(self, val)
-        _text = val
+    def text(self, val):
+        self._text = val
         self.compute_image()
 
     def draw(self):
@@ -148,7 +150,9 @@ class AdaptativeText(Widget):
 
 class AdaptativeNumeric(Widget):
     # TODO value format
-    __init__(self, value=value_min, value_min, value_max, x, y, w, h, font_name='Fleftex_M', font_size=8, font_dir=None):
+    # TODO disable auto scrolling
+
+    def __init__(self, value, value_min, value_max, x, y, w, h, font_name='Fleftex_M', font_size=8, font_dir=None):
         super().__init__(x, y, w, h)
         self.value_min = value_min
         self.value_max = value_max
@@ -158,18 +162,18 @@ class AdaptativeNumeric(Widget):
 
     @property
     def value(self):
-        return _text
+        return self._value
 
-    @text.setter
-    def value(self, val)
-        if val < value_min:
+    @value.setter
+    def value(self, val):
+        if val < self.value_min:
             raise Exception(
                 'Value ({}) is less than min ({})'.format(val, value_min))
-        if val > value_max:
+        if val > self.value_max:
             raise Exception(
                 'Value ({}) is greater than min ({})'.format(val, value_min))
 
-        _value = val
+        self._value = val
         self.text_component.text = str(_value)
 
     def draw(self):
@@ -177,3 +181,78 @@ class AdaptativeNumeric(Widget):
 
     def is_animation_end(self):
         return self.text_component.is_animation_end()
+
+
+class NumericInput(AdaptativeNumeric):
+
+    def input_in(self):
+        self.is_blinking = True
+
+    def input_out(self):
+        self.is_blinking = False
+        
+    def input(self, key):
+        if key == g.Key.PLUS:
+            if self.value < self.value_max:
+                self.value += 1
+            else:
+                self.value = self.value_min
+
+        elif key == g.Key.MINUS:
+            if self.value > self.value_min:
+                self.value -= 1
+            else:
+                self.value = self.value_max
+
+class TextInput(Widget):
+
+    cursor_pos = 0
+    current_char_idx = 0
+    ins_idx = 0
+    del_idx = 0
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, val):
+        self._text = val
+        self.compute_image()
+
+    def move_cursor(self, delta):
+        self.cursor_pos = (self.cursor_pos + delta) % len(self.text)
+
+    def shift_char(self, delta):
+        self.current_char_idx = (self.current_char_idx + delta) % len(self.char_list)
+
+    def insert_char(self):
+        self.text = self.text[:self.cursor_pos] + 'a' + self.text[self.cursor_pos:]
+        self.cursor_pos += 1
+
+    def delete_char(self):
+        if self.cursor_pos < len(self.text):
+            self.text = self.text[:self.cursor_pos] + self.text[(self.cursor_pos + 1):]
+
+    def input_in(self):
+        pass
+
+    def input_out(self):
+        pass
+
+    def input(self, key):
+        if key == g.Key.PLUS:
+            self.shift_char(1)
+
+        elif key == g.Key.MINUS:
+            self.shift_char(-1)
+        
+        elif key == g.Key.IN:
+            if self.current_char_idx < self.ins_idx:
+                self.move_cursor(1)
+            elif self.current_char_idx == self.ins_idx:
+                self.insert_char()
+            elif self.current_char_idx == self.del_idx:
+                self.delete_char()
+        return None
+        
