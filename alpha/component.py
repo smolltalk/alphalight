@@ -151,24 +151,9 @@ class AlarmComponent(AlphaComponent):
 
     def __init__(self):
         super().__init__()
-        self.hours = 0
-        self.minutes = 0
-        self.data_changed = False
-        self.edit_hours = True
-        self.blinker = Blinker()
 
     def do_compute_ui(self, displayer, ask_refresh, data, data_changed, counter):
-        self.blinker.tick()
-
-        if ask_refresh or self.data_changed or (self.is_editing and self.blinker.has_changed):
-            if self.blinker.blink:
-                c = widget.AdaptativeText(
-                    '  :  ', 0, 0, 32, 8, font_name='Fleftex_M')
-            else:
-                c = widget.AdaptativeText('{:2}:{:02d}'.format(
-                    self.hours, self.minutes), 0, 0, 32, 8, font_name='Fleftex_M')
-            self.data_changed = False
-            displayer.display(c)
+        displayer.display(c)
 
     def is_editable(self):
         return True

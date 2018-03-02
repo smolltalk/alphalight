@@ -1,6 +1,7 @@
 import numpy
 import PIL
 import string
+import re
 
 from PIL import Image
 from PIL import ImageFont
@@ -126,11 +127,13 @@ class AdaptativeText(Widget):
 
         tw, th = text_image.size
         if tw < self.w:
-            self.image = StaticImage(text_image, self.x, self.y, self.w, self.h)
+            self.image = StaticImage(
+                text_image, self.x, self.y, self.w, self.h)
         else:
             scrolling_image = Image.new('L', (tw + self.w, th), 1)
             scrolling_image.paste(text_image, (0, 0))
-            self.image = ScrollingImage(scrolling_image, self.x, self.y, self.w, self.h)
+            self.image = ScrollingImage(
+                scrolling_image, self.x, self.y, self.w, self.h)
 
     @property
     def text(self):
@@ -166,12 +169,15 @@ class AdaptativeNumeric(Widget):
 
     @value.setter
     def value(self, val):
+        if self.value_max <= self.value_min:
+            raise Exception(
+                'Value_max ({}) is less or equal than value_min ({})'.format(self.value_max, self.value_min))
         if val < self.value_min:
             raise Exception(
-                'Value ({}) is less than min ({})'.format(val, value_min))
+                'Value ({}) is less than min ({})'.format(val, self.value_min))
         if val > self.value_max:
             raise Exception(
-                'Value ({}) is greater than min ({})'.format(val, value_min))
+                'Value ({}) is greater than min ({})'.format(val, self.value_min))
 
         self._value = val
         self.text_component.text = str(_value)
@@ -190,7 +196,7 @@ class NumericInput(AdaptativeNumeric):
 
     def input_out(self):
         self.is_blinking = False
-        
+
     def input(self, key):
         if key == g.Key.PLUS:
             if self.value < self.value_max:
@@ -204,12 +210,24 @@ class NumericInput(AdaptativeNumeric):
             else:
                 self.value = self.value_max
 
+
+CHAR_LIST = list(re.sub('\t\s*', '', string.printable))
+CMD_INSERT = '[+]'
+CMD_DELETE = '[>]'
+CMD_LIST = [CMD_INSERT, CMD_DELETE]
+
+
 class TextInput(Widget):
 
-    cursor_pos = 0
-    current_char_idx = 0
-    ins_idx = 0
-    del_idx = 0
+    def __init__(self, text, x, y, w, h, font_name='PressStart2P-Regular', font_size=8, font_dir=None):
+        self.cursor_pos = 0
+        self.char_orig = 0
+        self.char_idx = 0
+        self.command_idx = 0
+        self.command_mode = False
+        self.text_component = AdaptativeText(
+            '', x, y, w, h, font_name, font_size, font_dir)
+        self.text = text
 
     @property
     def text(self):
@@ -218,21 +236,84 @@ class TextInput(Widget):
     @text.setter
     def text(self, val):
         self._text = val
-        self.compute_image()
+        val_len = len(val)
+        if val_len == 0:
+            self.enter_command_mode()
+        else:
+            if self.cursor_pos > val_len:
+                self.cursor_pos = val_len
+                self.enter_command_mode()
+            else:
+                self.enter_command_mode()
+        self.compute_display_text()
+
+    def enter_command_mode(self, start_end=False):
+        if start_end:
+            self.command_idx = len(CMD_LIST) - 1
+        else:
+            self.command_idx = 0
+        self.command_mode = True
+
+    def enter_char_mode(self):
+        self.char_orig = _text[self.cursor_pos]
+        self.char_idx = CHAR_LIST.index(self.char_orig)
+        self.command_mode = False
+
+    def is_over_text(self):
+        text_len = len(self.text)
+        if text_len == 0:
+            return True
+        if self.cursor_pos == text_len:
+            return True
+
+        return False
 
     def move_cursor(self, delta):
-        self.cursor_pos = (self.cursor_pos + delta) % len(self.text)
+        self.cursor_pos = (self.cursor_pos + delta) % (len(self.text) + 1)
+        if self.cursor_pos == len(self.text):
+            self.enter_command_mode()
+        self.compute_display_text()
 
     def shift_char(self, delta):
-        self.current_char_idx = (self.current_char_idx + delta) % len(self.char_list)
+        if self.command_mode:
+            self.command_idx += delta
+            if self.command_idx == -1 or self.command_idx == len(CMD_LIST):
+                if self.is_over_text():
+                    self.enter_command_mode(start_end=(self.command_idx == -1))
+                else:
+                    self.enter_char_mode()
+        else:
+            self.char_idx += delta
+            if self.char_idx >= 0 and self.char_idx < len(CHAR_LIST):
+                # Modify text
+                self._text[self.cursor_pos] = CHAR_LIST[self.char_idx]
+            else:
+                # Restore orig char
+                self._text[self.cursor_pos] = self.char_orig
+                # Enter in command mode
+                self.enter_cmd_mode(start_end=(self.char_idx == -1))
+
+        self.compute_display_text()
+
+    def interpret_command(self):
+        if CMD_LIST[self.command_idx] == CMD_INSERT:
+            self.insert_char()
+        elif CMD_LIST[self.command_idx] == CMD_DELETE:
+            self.delete_char()
 
     def insert_char(self):
-        self.text = self.text[:self.cursor_pos] + 'a' + self.text[self.cursor_pos:]
+        text = self.text
+        text = text[:self.cursor_pos] + \
+            'a' + text[self.cursor_pos:]
         self.cursor_pos += 1
+        self.text = text
 
     def delete_char(self):
-        if self.cursor_pos < len(self.text):
-            self.text = self.text[:self.cursor_pos] + self.text[(self.cursor_pos + 1):]
+        if not self.is_over_text():
+            text = self.text
+            self.text = text[:self.cursor_pos] + \
+                text[(self.cursor_pos + 1):]
+        self.compute_display_text()
 
     def input_in(self):
         pass
@@ -246,13 +327,25 @@ class TextInput(Widget):
 
         elif key == g.Key.MINUS:
             self.shift_char(-1)
-        
+
         elif key == g.Key.IN:
-            if self.current_char_idx < self.ins_idx:
+            if self.command_mode:
+                self.interpret_command()
+            else:
                 self.move_cursor(1)
-            elif self.current_char_idx == self.ins_idx:
-                self.insert_char()
-            elif self.current_char_idx == self.del_idx:
-                self.delete_char()
+
         return None
-        
+
+    def compute_display_text(self):
+        if self.command_mode:
+            display_text = self._text[:self.cursor_pos] + \
+                CMD_LIST[self.char_idx] + self._text[self.cursor_pos:]
+        else:
+            dispay_text = self._text
+        self.text_component.text = display_text
+
+    def draw(self):
+        return self.text_component.draw()
+
+    def is_animation_end(self):
+        return self.text_component.is_animation_end()

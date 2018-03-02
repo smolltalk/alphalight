@@ -1,0 +1,20 @@
+{
+    "param1": {
+        "__type": "string",
+        "__value": "abcdef"
+    },
+    "param2": {
+        "__type": "integer",
+        "__value": "123456"
+    },
+    "objet1": {
+        "param1": {
+            "__type": "string",
+            "__value": "abcdef"
+        },
+        "param2": {
+            "__type": "integer",
+            "__value": "123456"
+        }
+    }
+}
