@@ -46,6 +46,33 @@ class PropertyNode(object):
         i = (i + delta) % len(key_list)
         return self.properties[key_list[i]]
 
+class PropertyNodeBrowser(object):
+    
+    def __init__(node)
+        self.node = node
+
+    def display(self):
+
+    def move_to(self, node):
+        if node is self.node:
+            return
+        self.node = node
+        c = node.name + ': ' + node.value
+    
+
+    def input(i):
+        if a == '+' or a == '-':
+            if not node.is_root():
+                self.move_to(node.parent.property_after(self.node.name, 1 if a == '+' else -1))
+        elif a == 'in':
+            if self.node.has_properties():
+                self.move_to(node.property_first)
+            else:
+                # switch in edit mode
+        elif a == 'out':
+            if not node.is_root():
+                self.move_to(node.parent)
+                        
 
 p = PropertyNode('CONF', conf)
 print(p.property('param1'))
