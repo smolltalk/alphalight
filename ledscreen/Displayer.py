@@ -28,29 +28,6 @@ COMPONENT_COMPUTE_RATE = .1
 #
 # Question : détecter qu'il n'y a rien à faire
 
-
-class ComponentSlider(object):
-    def __init__(self, component_manager):
-        self.component_manager = component_manager
-        self.component_list = []
-        self.index = -1
-        self.size = 1
-
-    def get_list(self):
-        self.component_list = self.component_manager.get_list()
-        self.size = len(self.component_list)
-
-    def next(self, direction='r'):
-        if direction == 'r':
-            self.index += 1
-        else:
-            self.index -= 1
-        self.index %= self.size
-        if self.index == 0:
-            self.get_list()
-        return self.component_list[self.index]
-
-
 class Displayer(object):
     def __init__(self, screen):
         self.screen = screen
@@ -80,74 +57,39 @@ class InputManager(object):
     def process(self):
         key = self.key_reader.read_key()
         if key == g.Key.IN:
-            e = self.current.input(key)
+            e = self.current.input({'type': 'key', 'key': key})
             if e is not None:
+                self.current.input({'type': 'focus_lost'})
                 self.queue.put(self.current)
                 self.current = e
-                self.current.input_in()
+                self.current.input({'type': 'focus_in'})
         elif key == g.Key.OUT:
             if not self.queue.empty():
-                self.current.input_out()
+                self.current.input({'type': 'focus_out'})
                 self.current = self.queue.get()
+                self.current.input({'type': 'focus_back'})
         elif key == g.Key.PLUS:
-            self.current.input(key)
+            self.current.input({'type': 'key', 'key': key})
         elif key == g.Key.MINUS:
-            self.current.input(key)
+            self.current.input({'type': 'key', 'key': key})
         elif key == g.Key.QUIT:
             if self.queue.empty():
-                self.current.input(key)
+                self.current.input({'type': 'key', 'key': key})
 
 
 class PlayController(th.Thread):
-    def __init__(self, component_slider, displayer, key_reader, stopper=th.Event()):
+    def __init__(self, slider, displayer, key_reader, stopper=th.Event()):
         super().__init__()
         self.daemon = True
-        self.component_slider = component_slider
+        self.slider = slider
         self.displayer = displayer
         self.stopper = stopper
-        self.component = None
-        self.input_manager = InputManager(key_reader, self)
-        self.component_changed = False
+        self.input_manager = InputManager(key_reader, slider)
 
     def stop(self):
         self.stopper.set()
 
-    def input_in():
-        pass
-    
-    def input_out():
-        pass
-        
-    def input(self, key):
-        if self.component:
-            if key in [g.Key.PLUS, g.Key.MINUS]:
-                previous_component = self.component
-                self.component = self.component_slider.next(
-                    'r' if key == g.Key.PLUS else '')
-                self.component_changed |= self.component != previous_component
-            elif key == g.Key.QUIT:
-                self.stop()
-            elif key == g.Key.IN:
-                if self.component.is_editable():
-                    return self.component
-                else:
-                    return None
-
-    def compute_state(self):
-        if self.input_manager.current != self:
-            return
-        if self.component is None:
-            self.component = self.component_slider.next()
-            self.component_changed = True
-        else:
-            if self.component.is_enough_displayed():
-                previous_component = self.component
-                self.component = self.component_slider.next()
-                self.component_changed |= self.component != previous_component
-
     def run(self):
         while not self.stopper.wait(COMPONENT_COMPUTE_RATE):
-            self.component_changed = False
-            self.compute_state()
             self.input_manager.process()
-            self.component.compute_ui(self.displayer, self.component_changed)
+            self.slider.compute_ui(self.displayer, True)

@@ -39,7 +39,7 @@ c = Computer(cm)
 d = Displayer.Displayer(screen)
 
 # Component Slider
-s = Displayer.ComponentSlider(cm)
+s = SliderComponent(cm)
 
 # Key Reader
 k = getch.KeyReader()
