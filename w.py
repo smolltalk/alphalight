@@ -46,6 +46,11 @@ class Window(object):
             self.__widgets = []
             self.__fire_changed()
 
+    def display(self, displayer):
+        for w in self.__widgets:
+            wd = ChildDisplayer(displayer, w.x, w.y, w.w, w.h)
+            w.display(wd)
+
     def input_received(self, e):
         pass
 
@@ -58,7 +63,8 @@ class Window(object):
 
 class WindowManager(object):
 
-    def __init__(self):
+    def __init__(self, screen):
+        self.screen = screen
         self.windows = []
 
     def new_window(self, x, y, w, h):
@@ -93,12 +99,47 @@ class WindowManager(object):
         self.need_refresh = is_displayable(window)
 
     def display(self):
+        # Prepare image
+        w, h = self.screen.size()
+        image = PIL.Image.new('L', (w, h), 1)
+
+        # Prepare displayer
+        displayer = ImageDisplayer(image)
+
         for w in self.windows:
             if self.is_displayable(w):
-                w.display()
-            displayer.paste(x, y)
+                wd = ChildDisplayer(displayer, w.x, w.y, w.w, w.h)
+                w.display(wd)
+
+        # Push image to screen
+        screen.push_image(image)
+        screen.flush()
 
     def process(self):
         # Send clock event
         # Send input event
-        # Display
+        self.display()
+
+
+class ImageDisplayer(object):
+
+    def __init__(self, image):
+        self.__image = image
+
+    def paste(self, x, y, image):
+        self.__image.paste(image, (x, y))
+
+
+class ChildDisplayer(object):
+
+    def __init__(self, parent_displayer, rel_x, rel_y, w, h):
+        self.__parent_displayer = parent_displayer
+        self.__rel_x = rel_x
+        self.__rel_y = rel_y
+        self.__w = w
+        self.__h = h
+
+    def paste(self, x, y, image)
+    # TODO crop when needed
+        self.__parent_displayer.paste(
+            self.__rel_x + x, self.__rel_y + y, image)

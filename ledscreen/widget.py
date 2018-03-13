@@ -40,13 +40,13 @@ class StaticImage(Widget):
         self.image = image
         self.tw, self.th = self.image.size
 
-    def draw(self):
+    def display(self, displayer):
         cropx = 0
         cropy = 0
         cropx2 = min(cropx + self.w, self.tw)
         cropy2 = min(cropy + self.h, self.th)
         crop_text_image = self.image.crop((cropx, cropy, cropx2, cropy2))
-        return crop_text_image
+        displayer.paste(0, 0, crop_text_image)
 
 
 class ScrollingImage(Widget):
@@ -61,7 +61,7 @@ class ScrollingImage(Widget):
         self.tw, self.th = self.scrolling_image.size
         self.scrolling_size = self.tw - self.w
 
-    def draw(self):
+    def display(self, displayer):
         cropx = self.scroll_offset
         cropy = 0
         cropx2 = min(cropx + self.w, self.tw)
@@ -70,7 +70,7 @@ class ScrollingImage(Widget):
             (cropx, cropy, cropx2, cropy2))
         self.scroll_offset += 1
         self.scroll_offset %= self.scrolling_size
-        return crop_text_image
+        displayer.paste(0, 0, crop_text_image)
 
     def is_animation_end(self):
         return self.scroll_offset == self.scrolling_size - self.w
@@ -85,8 +85,8 @@ class AdaptativeImage(Widget):
         else:
             self.image = ScrollingImage(image, x, y, w, h)
 
-    def draw(self):
-        return self.image.draw()
+    def display(self, displayer):
+        return self.image.display(displayer)
 
 
 PLATFORM_FONT_DIR = {'win32': 'c:\\windows\\fonts\\',
@@ -144,8 +144,8 @@ class AdaptativeText(Widget):
         self._text = val
         self.compute_image()
 
-    def draw(self):
-        return self.image.draw()
+    def display(self, displayer):
+        return self.image.display(displayer)
 
     def is_animation_end(self):
         return self.image.is_animation_end()
@@ -182,8 +182,8 @@ class AdaptativeNumeric(Widget):
         self._value = val
         self.text_component.text = str(_value)
 
-    def draw(self):
-        return self.text_component.draw()
+    def display(self, displayer):
+        return self.text_component.display(displayer)
 
     def is_animation_end(self):
         return self.text_component.is_animation_end()
@@ -344,8 +344,8 @@ class TextInput(Widget):
             dispay_text = self._text
         self.text_component.text = display_text
 
-    def draw(self):
-        return self.text_component.draw()
+    def display(self, displayer):
+        return self.text_component.display(displayer)
 
     def is_animation_end(self):
         return self.text_component.is_animation_end()
