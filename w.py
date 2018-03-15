@@ -64,29 +64,30 @@ class Window(object):
 class WindowManager(object):
 
     def __init__(self, screen):
-        self.screen = screen
-        self.windows = []
+        self.__screen = screen
+        self.__windows = []
 
     def new_window(self, x, y, w, h):
         window = Window(self, x, y, w, h)
-        self.windows = self.windows.append(window)
+        self.__windows = self.windows.append(window)
         return window
 
     def move_to_window(self, forward=True):
         found = False
-        for idx, w in enumerate(reversed(self.windows[:-1])):
+        for idx, w in enumerate(reversed(self.__windows[:-1])):
             if w.visible:
                 found = True
                 break
         if found:
-            i = len(self.windows) - idx - 2
-            self.windows = self.windows[:i] + self.windows[(i + 1):] + [w]
+            i = len(self.__windows) - idx - 2
+            self.__windows = self.__windows[:i] + \
+                self.__windows[(i + 1):] + [w]
 
     def is_displayable(self, window):
         if not window.visible:
             return False
 
-        for w in self.windows:
+        for w in self.__windows:
             if w == window:
                 continue
             if not w.visible or w.transparent:
@@ -94,30 +95,34 @@ class WindowManager(object):
             return window.x < w.x or window.y < w.y or (window.x + window.w) > (w.x + w.w) or (window.y + window.h) > (w.y + w.h)
 
     def window_changed(self, window):
-        if self.need_refresh:
+        if self.__need_refresh:
             return
-        self.need_refresh = is_displayable(window)
+        self.__need_refresh = is_displayable(window)
 
     def display(self):
         # Prepare image
-        w, h = self.screen.size()
+        w, h = self.__screen.size()
         image = PIL.Image.new('L', (w, h), 1)
 
         # Prepare displayer
         displayer = ImageDisplayer(image)
 
-        for w in self.windows:
+        for w in self.__windows:
             if self.is_displayable(w):
                 wd = ChildDisplayer(displayer, w.x, w.y, w.w, w.h)
                 w.display(wd)
 
         # Push image to screen
-        screen.push_image(image)
-        screen.flush()
+        self.__screen.push_image(image)
+        self.__screen.flush()
+
+    def dispatch_clock(self):
+        for w in self.__windows:
+            w.clock_received()
 
     def process(self):
         # Send clock event
-        # Send input event
+        self.dispatch_clock()
         self.display()
 
 
