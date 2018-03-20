@@ -39,7 +39,11 @@ class Key(Enum):
     OUT = 1
     PLUS = 2
     MINUS = 3
-    QUIT = 4
+    LONG_IN = 4
+    LONG_OUT = 5
+    LONG_PLUS = 6
+    LONG_MINUS = 7
+    QUIT = 8
 
 
 class KeyReader(th.Thread):

@@ -1,3 +1,10 @@
+# TODO
+# - Widget
+# - ContainerWidget
+#   - with option on sub widget component order
+#   - dispatch display, clock, input_received
+#   - fire change to parent
+
 
 class Window(object):
 
@@ -38,13 +45,33 @@ class Window(object):
 
     def remove_widget(self, widget):
         self.__widgets.remove(widget)
+        if widget == self.selected_widget:
+            self.unselect_widget()
         if widget.visible:
             self.__fire_changed()
 
     def clear_widgets(self):
         if len(self.__wigets) > 0:
+            self.unselect_widget()
             self.__widgets = []
             self.__fire_changed()
+
+    def move_to_widget(self, forward=True):
+        pass
+
+    def select_widget(self):
+        if self.widget_selected:
+            return
+        # Else
+        self.selected_widget = self.active_widget
+        self.widget_selected = True
+
+    def unselect_widget(self):
+        if not self.widget_selected:
+            return
+        # Else
+        self.selected_widget = None
+        self.widget_selected = False
 
     def display(self, displayer):
         for w in self.__widgets:
@@ -52,7 +79,17 @@ class Window(object):
             w.display(wd)
 
     def input_received(self, e):
-        pass
+        if self.widget_selected:
+            if not self.selected_widget.input(e):
+                self.unselect_widget()
+        else:
+            if e == Key.PLUS or e == Key.MINUS:
+                self.move_to_widget(e == Key.PLUS)
+            elif e == Key.IN:
+                self.select_widget()
+            elif e == Key.OUT
+                return False
+        return None
 
     def clock_received(self, count):
         pass
@@ -99,6 +136,20 @@ class WindowManager(object):
             return
         self.__need_refresh = is_displayable(window)
 
+    def select_window(self):
+        if self.window_selected:
+            return
+        # Else
+        self.selected_window = self.__windows[-1]
+        self.window_selected = True
+
+    def unselect_window(self):
+        if not self.window_selected:
+            return
+        # Else
+        self.selected_window = None
+        self.window_selected = False
+
     def display(self):
         # Prepare image
         w, h = self.__screen.size()
@@ -120,8 +171,17 @@ class WindowManager(object):
         for w in self.__windows:
             w.clock_received()
 
+    def input_received(self, e):
+        if self.window_selected:
+            if self.selected_window.input(e) == False:
+                self.unselect_window()
+        else:
+            if e == Key.PLUS or e == Key.MINUS:
+                self.move_to_window(e == Key.PLUS)
+            elif e == Key.IN:
+                self.select_window()
+
     def process(self):
-        # Send clock event
         self.dispatch_clock()
         self.display()
 
